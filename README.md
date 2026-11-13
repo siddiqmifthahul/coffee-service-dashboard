@@ -170,14 +170,25 @@ Realtime: client Socket.IO terhubung ke URL backend dengan `auth: { token }`. Se
 
 ## Deploy (free tier)
 
-| Bagian | Layanan | Catatan |
+| Bagian | Layanan | Konfigurasi |
 |---|---|---|
-| Database | Supabase | sudah online |
-| Backend | Render (Web Service, Node) | Build: `npm install && npx prisma migrate deploy` · Start: `npm start`. Env: `DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`, `CORS_ORIGIN=<url frontend>`, `AI_SERVICE_URL=<url ai-service>`, `NODE_ENV=production` |
-| AI service | Render (Web Service, Python) | Build: `pip install -r requirements.txt` · Start: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`. Env: `GEMINI_API_KEY`, `CORS_ORIGIN=<url backend>` |
-| Frontend | Vercel / Netlify | Root `frontend`, build `npm run build`, output `dist`. Env `VITE_API_URL=<url backend>`. Tambahkan rewrite SPA (semua path → `/index.html`) |
+| Database | **Supabase** (Singapore) | sudah online |
+| Backend + AI service | **Render** (Singapore) | otomatis lewat [`render.yaml`](render.yaml) (Blueprint) |
+| Frontend | **Vercel** | root `frontend`, sudah ada [`frontend/vercel.json`](frontend/vercel.json) (rewrite SPA) |
 
-> Render free tier "tidur" setelah 15 menit tanpa trafik, jadi request pertama bisa lambat ±30 detik. Antrean offline di frontend memastikan transaksi tidak hilang selama itu.
+**Langkah:**
+1. **Render** → *New* → *Blueprint* → pilih repo ini. Render membuat 2 service: `coffee-service-api` dan `coffee-service-ai`. Isi env yang diminta:
+   - `DATABASE_URL` dan `DIRECT_URL`: sama dengan `backend/.env` (session pooler port 5432).
+   - `GEMINI_API_KEY`: opsional.
+   - `CORS_ORIGIN` dan `AI_SERVICE_URL`: isi sementara, perbarui di langkah 3.
+2. **Vercel** → *Add New Project* → pilih repo → *Root Directory* `frontend` → env `VITE_API_URL=https://<coffee-service-api>.onrender.com` → *Deploy*.
+3. Kembali ke Render (service `coffee-service-api` → *Environment*):
+   - `CORS_ORIGIN=https://<app>.vercel.app`
+   - `AI_SERVICE_URL=https://<coffee-service-ai>.onrender.com`
+   - Simpan; service otomatis redeploy.
+4. Buka URL Vercel di HP, lalu login dan **ganti password akun demo** di menu Pengguna.
+
+> Render free tier "tidur" setelah 15 menit tanpa trafik, sehingga request pertama bisa lambat ±30–50 detik. Antrean offline di frontend memastikan transaksi tidak hilang selama menunggu.
 
 ## Data & sumber
 - Menu, HPP, harga jual, qty bulanan, dan biaya operasional berasal dari file UMKM `PERHITUNGAN PENDAPTAN CEES-1.xlsx` (data primer, tanpa identitas pelanggan).

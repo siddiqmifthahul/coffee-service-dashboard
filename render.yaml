@@ -1,0 +1,48 @@
+# Render Blueprint — deploy backend (Express) & ai-service (FastAPI) sekaligus.
+# Render Dashboard > New > Blueprint > pilih repo ini. Nilai bertanda `sync: false` diisi manual saat setup.
+services:
+  - type: web
+    name: coffee-service-api
+    runtime: node
+    rootDir: backend
+    plan: free
+    region: singapore # dekat dengan database Supabase (ap-southeast-1)
+    buildCommand: npm ci && npx prisma migrate deploy
+    startCommand: npm start
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL # Supabase session pooler :5432 (lihat backend/.env.example)
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: CORS_ORIGIN # URL frontend Vercel, mis. https://coffee-service.vercel.app
+        sync: false
+      - key: AI_SERVICE_URL # URL ai-service di Render, mis. https://coffee-service-ai.onrender.com
+        sync: false
+      - key: AI_TIMEOUT_MS
+        value: "20000" # free tier bisa "bangun tidur" ±30 detik
+
+  - type: web
+    name: coffee-service-ai
+    runtime: python
+    rootDir: ai-service
+    plan: free
+    region: singapore
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.6"
+      - key: GEMINI_API_KEY # opsional; kosong = mode cadangan (template)
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
