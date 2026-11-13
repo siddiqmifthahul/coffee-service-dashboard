@@ -13,3 +13,5 @@ __pycache__/
 
 # Model buatan tim (simpan di storage terpisah bila besar)
 ai-service/models/*.pkl
+.env.vercel
+.env.*.local
