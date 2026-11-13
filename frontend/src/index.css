@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+
+  /* Warna utama: cokelat kopi */
+  --color-brand-50: #faf6f1;
+  --color-brand-100: #f3e9dd;
+  --color-brand-200: #e6d2bb;
+  --color-brand-300: #d4b28f;
+  --color-brand-400: #b98a5f;
+  --color-brand-500: #9a6b42;
+  --color-brand-600: #7f5536;
+  --color-brand-700: #6f4e37;
+  --color-brand-800: #4f3726;
+  --color-brand-900: #33241a;
+
+  /* Seri grafik (palet tervalidasi CVD, slot 1 & 2) */
+  --color-income: #2a78d6;
+  --color-expense: #eb6834;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  background: #f7f5f2;
+  color: #1c1917;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Angka rata untuk nominal Rupiah */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-stone-200/80 bg-white shadow-[0_1px_2px_rgba(28,25,23,0.04)];
+  }
+  .input {
+    @apply w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-[15px] text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 disabled:bg-stone-100;
+  }
+  .input-error {
+    @apply border-red-500 focus:border-red-500 focus:ring-red-100;
+  }
+  .label {
+    @apply mb-1.5 block text-sm font-semibold text-stone-700;
+  }
+  .chip {
+    @apply inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-stone-300 bg-white px-3.5 py-2 text-sm font-medium text-stone-700 transition hover:border-brand-400 select-none;
+  }
+  .chip-active {
+    @apply border-brand-700 bg-brand-700 text-white hover:border-brand-700;
+  }
+  .th {
+    @apply px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-stone-500;
+  }
+  .td {
+    @apply px-3 py-2.5 text-sm text-stone-800;
+  }
+}
+
+/* Safe area untuk bottom nav di ponsel */
+.pb-safe {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem);
+}

@@ -1,0 +1,139 @@
+// Skema database Dashboard Rekapan Kasir Coffee Service.
+// Database: PostgreSQL (Supabase). Semua nominal uang disimpan sebagai Int (Rupiah, tanpa desimal).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  OWNER
+  KASIR
+}
+
+enum ProductCategory {
+  KOPI
+  NON_KOPI
+  TAMBAHAN
+}
+
+enum PaymentMethod {
+  TUNAI
+  QRIS
+  TRANSFER
+}
+
+enum TransactionStatus {
+  ACTIVE
+  VOID
+}
+
+enum CashEntryType {
+  PEMASUKAN
+  PENGELUARAN
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String
+  username     String   @unique
+  passwordHash String
+  role         Role     @default(KASIR)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  transactions Transaction[] @relation("CashierTransactions")
+  voided       Transaction[] @relation("VoidedTransactions")
+  cashEntries  CashEntry[]
+}
+
+model Product {
+  id        Int             @id @default(autoincrement())
+  name      String          @unique
+  category  ProductCategory @default(KOPI)
+  price     Int // harga jual
+  hpp       Int // harga pokok penjualan per cup
+  isActive  Boolean         @default(true)
+  sortOrder Int             @default(0)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  items TransactionItem[]
+}
+
+model Transaction {
+  id            Int               @id @default(autoincrement())
+  code          String            @unique
+  clientId      String            @unique // dibuat di browser kasir -> autosave idempoten
+  occurredAt    DateTime          @default(now())
+  cashierId     Int
+  paymentMethod PaymentMethod     @default(TUNAI)
+  total         Int
+  totalHpp      Int
+  itemCount     Int
+  note          String?
+  status        TransactionStatus @default(ACTIVE)
+  voidReason    String?
+  voidedAt      DateTime?
+  voidedById    Int?
+  createdAt     DateTime          @default(now())
+
+  cashier  User              @relation("CashierTransactions", fields: [cashierId], references: [id])
+  voidedBy User?             @relation("VoidedTransactions", fields: [voidedById], references: [id])
+  items    TransactionItem[]
+
+  @@index([occurredAt])
+  @@index([status, occurredAt])
+}
+
+model TransactionItem {
+  id            Int    @id @default(autoincrement())
+  transactionId Int
+  productId     Int
+  productName   String // snapshot saat transaksi
+  price         Int // snapshot harga jual
+  hpp           Int // snapshot HPP
+  qty           Int
+  subtotal      Int
+
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  product     Product     @relation(fields: [productId], references: [id])
+
+  @@index([transactionId])
+  @@index([productId])
+}
+
+model CashEntry {
+  id          Int           @id @default(autoincrement())
+  clientId    String?       @unique
+  type        CashEntryType
+  category    String
+  amount      Int
+  description String?
+  occurredAt  DateTime      @default(now())
+  createdById Int
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  createdBy User @relation(fields: [createdById], references: [id])
+
+  @@index([occurredAt])
+}
+
+model AiLog {
+  id         Int      @id @default(autoincrement())
+  type       String // insight | forecast | chat
+  request    Json
+  response   Json?
+  isFallback Boolean  @default(false)
+  userId     Int?
+  createdAt  DateTime @default(now())
+
+  @@index([type, createdAt])
+}
