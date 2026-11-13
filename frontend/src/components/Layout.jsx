@@ -28,10 +28,10 @@ const KASIR_NAV = [
 ];
 
 function SyncStatus({ compact = false }) {
-  const { live, online, pending, syncing, flush } = useSync();
+  const { live, online, pending, syncing, flush, mode } = useSync();
   let tone = 'bg-emerald-50 text-emerald-700 border-emerald-200';
   let icon = <span className="relative flex size-2"><span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" /><span className="relative inline-flex size-2 rounded-full bg-emerald-500" /></span>;
-  let text = 'Live · tersimpan';
+  let text = mode === 'polling' ? 'Tersinkron otomatis' : 'Live · tersimpan';
 
   if (pending > 0) {
     tone = 'bg-amber-50 text-amber-800 border-amber-200';
@@ -51,7 +51,7 @@ function SyncStatus({ compact = false }) {
     <button
       type="button"
       onClick={flush}
-      title={pending ? 'Data tersimpan di perangkat ini dan akan dikirim otomatis. Klik untuk coba kirim sekarang.' : 'Status sinkronisasi'}
+      title={pending ? 'Data tersimpan di perangkat ini dan akan dikirim otomatis. Klik untuk coba kirim sekarang.' : mode === 'polling' ? 'Data diperbarui otomatis setiap 15 detik' : 'Terhubung realtime'}
       className={cx('inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold', tone)}
     >
       {icon}

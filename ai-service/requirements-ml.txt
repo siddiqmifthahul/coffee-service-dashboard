@@ -1,0 +1,10 @@
+# --- Training ML, notebook & testing (lokal) ---
+# pip install -r requirements-ml.txt
+-r requirements.txt
+pandas>=2.2
+numpy>=1.26
+scikit-learn>=1.5
+xgboost>=2.0
+joblib>=1.4
+pytest>=8.0
+httpx>=0.27

@@ -168,27 +168,28 @@ Realtime: client Socket.IO terhubung ke URL backend dengan `auth: { token }`. Se
 
 ---
 
-## Deploy (free tier)
+## Deploy (free tier, tanpa kartu kredit)
 
-| Bagian | Layanan | Konfigurasi |
-|---|---|---|
-| Database | **Supabase** (Singapore) | sudah online |
-| Backend + AI service | **Render** (Singapore) | otomatis lewat [`render.yaml`](render.yaml) (Blueprint) |
-| Frontend | **Vercel** | root `frontend`, sudah ada [`frontend/vercel.json`](frontend/vercel.json) (rewrite SPA) |
+Ketiga bagian di-deploy sebagai **3 project Vercel** dari repo yang sama, semuanya di region Singapore (`sin1`) agar dekat dengan Supabase.
 
-**Langkah:**
-1. **Render** → *New* → *Blueprint* → pilih repo ini. Render membuat 2 service: `coffee-service-api` dan `coffee-service-ai`. Isi env yang diminta:
-   - `DATABASE_URL` dan `DIRECT_URL`: sama dengan `backend/.env` (session pooler port 5432).
-   - `GEMINI_API_KEY`: opsional.
-   - `CORS_ORIGIN` dan `AI_SERVICE_URL`: isi sementara, perbarui di langkah 3.
-2. **Vercel** → *Add New Project* → pilih repo → *Root Directory* `frontend` → env `VITE_API_URL=https://<coffee-service-api>.onrender.com` → *Deploy*.
-3. Kembali ke Render (service `coffee-service-api` → *Environment*):
-   - `CORS_ORIGIN=https://<app>.vercel.app`
-   - `AI_SERVICE_URL=https://<coffee-service-ai>.onrender.com`
-   - Simpan; service otomatis redeploy.
-4. Buka URL Vercel di HP, lalu login dan **ganti password akun demo** di menu Pengguna.
+| Project Vercel | Root Directory | Konfigurasi | Environment Variables |
+|---|---|---|---|
+| Frontend | `frontend` | preset **Vite**, [`frontend/vercel.json`](frontend/vercel.json) | `VITE_API_URL=https://<backend>.vercel.app`, `VITE_REALTIME=polling` |
+| Backend (Express serverless) | `backend` | [`backend/vercel.json`](backend/vercel.json) → `api/index.js` | `DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`, `NODE_ENV=production`, `CORS_ORIGIN=https://<frontend>.vercel.app`, `AI_SERVICE_URL=https://<ai>.vercel.app`, `AI_TIMEOUT_MS=20000` |
+| AI service (FastAPI serverless) | `ai-service` | [`ai-service/vercel.json`](ai-service/vercel.json) → `api/index.py` | `GEMINI_API_KEY` (opsional), `GEMINI_MODEL=gemini-2.5-flash` |
 
-> Render free tier "tidur" setelah 15 menit tanpa trafik, sehingga request pertama bisa lambat ±30–50 detik. Antrean offline di frontend memastikan transaksi tidak hilang selama menunggu.
+**Untuk backend serverless, pakai transaction pooler** Supabase:
+
+`DATABASE_URL=...pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1`
+
+Alasannya, serverless membuka banyak koneksi singkat. `DIRECT_URL` tetap memakai port 5432. Migrasi dijalankan dari lokal dengan `npx prisma migrate deploy`.
+
+**Perbedaan dibanding server biasa:**
+- **Realtime:** Socket.IO tidak tersedia di serverless. Dengan `VITE_REALTIME=polling`, dashboard **diperbarui otomatis setiap 15 detik**, dan langsung diperbarui setelah transaksi disimpan dari perangkat yang sama. Header menampilkan "Tersinkron otomatis".
+- **ai-service:** hanya memasang `requirements.txt` (tanpa library ML) karena batas ukuran fungsi serverless 250 MB. Baseline forecasting tidak membutuhkan library ML.
+- Request pertama setelah lama tidak dipakai bisa lambat beberapa detik (*cold start*). Antrean offline di frontend memastikan transaksi tidak hilang.
+
+**Alternatif server biasa:** [`render.yaml`](render.yaml) (Render Blueprint) men-deploy backend dan ai-service sebagai server yang terus menyala, dengan realtime Socket.IO aktif. Render mewajibkan verifikasi kartu kredit meskipun plan Free.
 
 ## Data & sumber
 - Menu, HPP, harga jual, qty bulanan, dan biaya operasional berasal dari file UMKM `PERHITUNGAN PENDAPTAN CEES-1.xlsx` (data primer, tanpa identitas pelanggan).

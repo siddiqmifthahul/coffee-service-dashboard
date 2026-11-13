@@ -127,7 +127,7 @@ Input tidak valid dijawab dengan **422** dan detail field (validasi Pydantic).
 
 ```bash
 python -m venv .venv && .venv\Scripts\activate     # macOS/Linux: source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements-ml.txt                  # serving + training + test (requirements.txt = serving saja)
 cp .env.example .env                                # isi GEMINI_API_KEY (opsional)
 uvicorn app.main:app --reload --port 8000           # Swagger: http://localhost:8000/docs
 pytest -q                                           # 24 tes: API, guardrail, pipeline ML
@@ -141,6 +141,8 @@ python -m training.prepare_data                     # preprocessing → data/pro
 python -m training.train_forecast                   # komparasi model → reports/model_comparison.md (+ models/forecast_model.joblib bila ML menang)
 ```
 Restart service setelah training agar model baru termuat.
+
+> ℹ️ Deploy di Vercel hanya memasang `requirements.txt` (serving, tanpa library ML) karena batas ukuran fungsi serverless 250 MB. Selama model terpilih adalah baseline, itu sudah cukup. Jika nanti model ML menang dan `models/forecast_model.joblib` di-commit, tambahkan `pandas`, `scikit-learn`, dan `joblib` ke `requirements.txt` (XGBoost hanya bila model terpilih XGBoost), atau deploy ai-service di hosting berbasis container.
 
 ## 7. Sumber library, API & data
 

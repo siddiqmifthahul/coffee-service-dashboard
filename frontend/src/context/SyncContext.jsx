@@ -10,6 +10,8 @@ const SyncContext = createContext(null);
 
 const ENDPOINT = { transaction: '/transactions', cash: '/cash-entries' };
 const RETRY_MS = 8000;
+const POLL_MS = 15000;
+const INITIAL_MODE = import.meta.env.VITE_REALTIME === 'polling' ? 'polling' : 'socket';
 
 export function SyncProvider({ children }) {
   const { token } = useAuth();
@@ -18,6 +20,7 @@ export function SyncProvider({ children }) {
   const [syncing, setSyncing] = useState(false);
   const [live, setLive] = useState(false);
   const [online, setOnline] = useState(() => navigator.onLine);
+  const [mode, setMode] = useState(INITIAL_MODE); // 'socket' | 'polling'
   const flushing = useRef(false);
   const waiters = useRef(new Map()); // clientId -> resolve
 
@@ -112,24 +115,50 @@ export function SyncProvider({ children }) {
     };
   }, [token, flush]);
 
-  // Realtime: dengarkan perubahan data dari server
+  // Realtime mode 1 — Socket.IO (server Node yang terus menyala).
+  // Jika VITE_REALTIME=polling (deploy serverless) atau socket gagal tersambung berulang kali,
+  // pindah ke mode 2 — auto-refresh berkala.
   useEffect(() => {
-    if (!token) return undefined;
-    const socket = io(API_URL, { auth: { token }, transports: ['websocket', 'polling'] });
+    if (!token || mode !== 'socket') return undefined;
+    let failures = 0;
+    const socket = io(API_URL, { auth: { token }, transports: ['websocket', 'polling'], reconnectionAttempts: 5 });
     socket.on('connect', () => {
+      failures = 0;
       setLive(true);
       flush();
     });
     socket.on('disconnect', () => setLive(false));
-    socket.on('connect_error', () => setLive(false));
+    socket.on('connect_error', () => {
+      setLive(false);
+      failures += 1;
+      if (failures >= 3) setMode('polling');
+    });
     socket.on('data:changed', (evt) => {
       if (evt.kind === 'product') queryClient.invalidateQueries({ queryKey: ['products'] });
       else refreshAll();
     });
     return () => socket.disconnect();
-  }, [token, flush, refreshAll, queryClient]);
+  }, [token, mode, flush, refreshAll, queryClient]);
 
-  const value = useMemo(() => ({ pending, syncing, live, online, save, flush }), [pending, syncing, live, online, save, flush]);
+  // Realtime mode 2 — auto-refresh berkala (hanya saat tab terlihat, agar hemat kuota)
+  useEffect(() => {
+    if (!token || mode !== 'polling') return undefined;
+    setLive(true);
+    const tick = () => {
+      if (document.visibilityState === 'visible' && navigator.onLine) refreshAll();
+    };
+    const timer = setInterval(tick, POLL_MS);
+    document.addEventListener('visibilitychange', tick);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', tick);
+    };
+  }, [token, mode, refreshAll]);
+
+  const value = useMemo(
+    () => ({ pending, syncing, live: live && online, online, mode, save, flush }),
+    [pending, syncing, live, online, mode, save, flush],
+  );
   return <SyncContext.Provider value={value}>{children}</SyncContext.Provider>;
 }
 
