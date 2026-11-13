@@ -1,8 +1,17 @@
+# --- Serving (FastAPI) ---
 fastapi>=0.115
 uvicorn[standard]>=0.30
 pydantic>=2.7
 python-dotenv>=1.0
 google-genai>=1.20
-# untuk testing
+
+# --- Machine Learning (training + serving model hasil training) ---
+pandas>=2.2
+numpy>=1.26
+scikit-learn>=1.5
+xgboost>=2.0
+joblib>=1.4
+
+# --- Testing ---
 pytest>=8.0
 httpx>=0.27

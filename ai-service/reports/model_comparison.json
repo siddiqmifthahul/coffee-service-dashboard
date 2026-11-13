@@ -1,0 +1,144 @@
+{
+  "generated_at": "2026-11-13T20:44:29",
+  "is_dummy": true,
+  "targets": {
+    "sales": {
+      "info": {
+        "train_rows": 55,
+        "test_rows": 21,
+        "train_period": [
+          "2026-08-29",
+          "2026-10-22"
+        ],
+        "test_period": [
+          "2026-10-23",
+          "2026-11-12"
+        ],
+        "test_mean": 150333.33333333334
+      },
+      "results": [
+        {
+          "name": "Baseline (rata-rata x faktor hari)",
+          "mae": 48600.118622196125,
+          "rmse": 57750.72290242716,
+          "r2": 0.264434805767778,
+          "mae_7d": 57318.30046746401,
+          "params": {}
+        },
+        {
+          "name": "RandomForest-tuned",
+          "mae": 54201.948447692266,
+          "rmse": 63127.89147824958,
+          "r2": 0.12108092771976797,
+          "mae_7d": 63093.896846636744,
+          "params": {
+            "max_depth": 5,
+            "max_features": 0.5,
+            "min_samples_leaf": 3,
+            "n_estimators": 500
+          }
+        },
+        {
+          "name": "XGBoost-tuned",
+          "mae": 54260.654017857145,
+          "rmse": 63405.70337176558,
+          "r2": 0.11332804878591152,
+          "mae_7d": 67163.10491071429,
+          "params": {
+            "learning_rate": 0.03,
+            "max_depth": 2,
+            "n_estimators": 100,
+            "reg_lambda": 5.0,
+            "subsample": 0.8
+          }
+        },
+        {
+          "name": "RandomForest",
+          "mae": 54541.636054421775,
+          "rmse": 64911.47437513093,
+          "r2": 0.07071426973619277,
+          "mae_7d": 68790.18499622073,
+          "params": {}
+        },
+        {
+          "name": "XGBoost",
+          "mae": 63237.747767857145,
+          "rmse": 75027.04062164412,
+          "r2": -0.24148636422137448,
+          "mae_7d": 87713.78571428571,
+          "params": {}
+        }
+      ]
+    },
+    "cups": {
+      "info": {
+        "train_rows": 55,
+        "test_rows": 21,
+        "train_period": [
+          "2026-08-29",
+          "2026-10-22"
+        ],
+        "test_period": [
+          "2026-10-23",
+          "2026-11-12"
+        ],
+        "test_mean": 8.952380952380953
+      },
+      "results": [
+        {
+          "name": "Baseline (rata-rata x faktor hari)",
+          "mae": 2.8697883203298566,
+          "rmse": 3.518449120591705,
+          "r2": 0.2144816491426027,
+          "mae_7d": 3.2483065428114384,
+          "params": {}
+        },
+        {
+          "name": "RandomForest",
+          "mae": 2.881534517510708,
+          "rmse": 3.6031011176259264,
+          "r2": 0.17622864607881927,
+          "mae_7d": 3.2286636432350724,
+          "params": {}
+        },
+        {
+          "name": "RandomForest-tuned",
+          "mae": 2.9030978759127257,
+          "rmse": 3.5479636813309443,
+          "r2": 0.20124771060961855,
+          "mae_7d": 3.2581791097639274,
+          "params": {
+            "max_depth": 3,
+            "max_features": 0.5,
+            "min_samples_leaf": 3,
+            "n_estimators": 500
+          }
+        },
+        {
+          "name": "XGBoost",
+          "mae": 2.903788861774263,
+          "rmse": 3.8134278019812213,
+          "r2": 0.07724832575436125,
+          "mae_7d": 4.051992280142648,
+          "params": {}
+        },
+        {
+          "name": "XGBoost-tuned",
+          "mae": 2.997628847757975,
+          "rmse": 3.7141203697907423,
+          "r2": 0.12468225273512445,
+          "mae_7d": 3.7936504908970425,
+          "params": {
+            "learning_rate": 0.03,
+            "max_depth": 2,
+            "n_estimators": 100,
+            "reg_lambda": 5.0,
+            "subsample": 0.8
+          }
+        }
+      ]
+    }
+  },
+  "selected": "Baseline (rata-rata x faktor hari)",
+  "deployed": false
+}

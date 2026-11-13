@@ -1,8 +1,12 @@
 """Forecasting penjualan harian.
 
-Baseline: rata-rata 4 minggu terakhir x faktor hari-dalam-minggu (seasonal naive yang dihaluskan).
-Tim AI/DS dapat mengganti dengan model sendiri (mis. XGBoost / Random Forest) tanpa mengubah API:
-buat file `models/custom_forecaster.py` berisi fungsi
+Urutan model yang dipakai /predict-sales:
+  1. models/forecast_model.joblib  -> model ML terpilih dari `python -m training.train_forecast`
+     (Random Forest / XGBoost; hanya dipasang jika mengalahkan baseline pada data uji)
+  2. models/custom_forecaster.py   -> model buatan tim dengan antarmuka bebas (lihat di bawah)
+  3. Baseline: rata-rata 4 minggu terakhir x faktor hari-dalam-minggu (seasonal naive yang dihaluskan).
+
+Antarmuka custom: buat file `models/custom_forecaster.py` berisi fungsi
 
     def predict(history: list[dict], horizon: int) -> list[dict]:
         # history: [{"date": "YYYY-MM-DD", "sales": int, "cups": int, "transactions": int}, ...]
@@ -39,6 +43,40 @@ def _load_custom():
 
 
 _custom = _load_custom()
+
+ML_PATH = Path(__file__).resolve().parent.parent / "models" / "forecast_model.joblib"
+
+
+def _load_ml():
+    if not ML_PATH.exists():
+        return None
+    try:
+        import joblib
+
+        artifact = joblib.load(ML_PATH)
+        log.info("Memakai model ML: %s (dilatih s/d %s)", artifact["model_name"], artifact.get("trained_until"))
+        return artifact
+    except Exception as exc:  # noqa: BLE001
+        log.warning("Gagal memuat %s, memakai baseline: %s", ML_PATH.name, exc)
+        return None
+
+
+_ml = _load_ml()
+
+
+def ml_predict(artifact: dict, history: list[dict], horizon: int) -> list[dict]:
+    import pandas as pd
+
+    from .features import MIN_HISTORY, recursive_forecast
+
+    if len(history) < MIN_HISTORY:
+        raise ValueError(f"Riwayat kurang dari {MIN_HISTORY} hari")
+    df = pd.DataFrame(history)
+    df["date"] = pd.to_datetime(df["date"])
+    sales = recursive_forecast(artifact["sales_model"], df[["date", "sales"]], "sales", horizon)
+    cups = recursive_forecast(artifact["cups_model"], df[["date", "cups"]], "cups", horizon)
+    start = df["date"].max().date() + timedelta(days=1)
+    return [{"date": (start + timedelta(days=i)).isoformat(), "sales": s, "cups": c} for i, (s, c) in enumerate(zip(sales, cups))]
 
 
 def _weekday_factors(history: list[dict], key: str) -> list[float]:
@@ -86,6 +124,17 @@ def backtest_mae(history: list[dict], horizon: int = 7) -> float | None:
 def predict(history: list[dict], horizon: int) -> dict:
     history = sorted(history, key=lambda h: h["date"])
     active_days = sum(1 for h in history if h["sales"] > 0)
+
+    if _ml is not None:
+        try:
+            return {
+                "predictions": ml_predict(_ml, history, horizon),
+                "model_name": _ml["model_name"],
+                "metrics": {**_ml.get("metrics", {}), "trained_until": _ml.get("trained_until")},
+                "is_fallback": False,
+            }
+        except Exception as exc:  # noqa: BLE001
+            log.warning("Model ML error, memakai baseline: %s", exc)
 
     if _custom is not None:
         try:

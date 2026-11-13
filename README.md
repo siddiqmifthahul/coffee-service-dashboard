@@ -22,7 +22,7 @@ Capstone **Asah 2026 · Tim A26-CS276** untuk UMKM **Coffee Service** (Banda Ace
 |---|---|
 | `frontend/` | React 19 + Vite, Tailwind CSS 4, Axios, TanStack Query, Recharts, Socket.IO client |
 | `backend/` | Express (`/api/v1`), Joi (validasi), Prisma ORM (Postgres/Supabase), JWT, Socket.IO, ExcelJS |
-| `ai-service/` | FastAPI: `/predict-sales`, `/generate-insight`, `/chat` (Swagger di `/docs`) |
+| `ai-service/` | FastAPI: `/predict-sales`, `/generate-insight`, `/chat` (Swagger di `/docs`) + pipeline training ML. **Detail model, preprocessing, perbandingan model & uji guardrail: [`ai-service/README.md`](ai-service/README.md)** |
 
 Layanan Gen AI **hanya dipanggil dari backend**, tidak langsung dari frontend.
 

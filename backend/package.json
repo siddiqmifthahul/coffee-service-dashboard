@@ -14,7 +14,8 @@
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",
     "test": "vitest run",
-    "test:db": "vitest run --mode db"
+    "test:db": "vitest run --mode db",
+    "export:training": "node --env-file-if-exists=.env scripts/export-training-data.js"
   },
   "engines": {
     "node": ">=20"
